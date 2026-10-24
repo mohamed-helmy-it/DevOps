@@ -1,0 +1,17 @@
+---
+- name: Download VProfile Source Code
+  hosts: node2
+  become: true
+
+  tasks:
+    - name: Install Git
+      ansible.builtin.apt:
+        name: git
+        state: present
+        update_cache: true
+
+    - name: Clone VProfile Repository
+      ansible.builtin.git:
+        repo: https://github.com/hkhcoder/vprofile-project.git
+        dest: /opt/vprofile-project
+        version: main

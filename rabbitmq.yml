@@ -1,0 +1,21 @@
+---
+- name: Install RabbitMQ
+  hosts: node1
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install RabbitMQ Server
+      ansible.builtin.apt:
+        name: rabbitmq-server
+        state: present
+
+    - name: Enable and start RabbitMQ
+      ansible.builtin.service:
+        name: rabbitmq-server
+        state: started
+        enabled: true
