@@ -1,0 +1,4 @@
+zabbix_version: "7.0"
+zabbix_timezone: "Africa/Cairo"
+zabbix_server_ip: "172.22.178.62"
+zabbix_db_password: "{{ vault_zabbix_db_password }}"

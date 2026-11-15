@@ -1,0 +1,12 @@
+---
+- name: Zabbix server
+  hosts: zabbix_server
+  become: true
+  roles:
+    - zabbix_server
+
+- name: Zabbix agents on the VMs
+  hosts: vms
+  become: true
+  roles:
+    - zabbix_agent

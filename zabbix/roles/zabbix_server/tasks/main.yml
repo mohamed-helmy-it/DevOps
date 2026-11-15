@@ -1,0 +1,92 @@
+---
+- name: Add Zabbix repository
+  ansible.builtin.apt:
+    deb: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_{{ zabbix_version }}+ubuntu{{ ansible_distribution_version }}_all.deb"
+
+- name: Install Zabbix packages
+  ansible.builtin.apt:
+    update_cache: true
+    name:
+      - zabbix-server-mysql
+      - zabbix-frontend-php
+      - zabbix-apache-conf
+      - zabbix-sql-scripts
+      - zabbix-agent2
+      - mariadb-server
+      - python3-pymysql
+
+- name: Start MariaDB
+  ansible.builtin.service:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: Create Zabbix database
+  community.mysql.mysql_db:
+    name: zabbix
+    encoding: utf8mb4
+    collation: utf8mb4_bin
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: Create Zabbix DB user
+  community.mysql.mysql_user:
+    name: zabbix
+    password: "{{ zabbix_db_password }}"
+    priv: "zabbix.*:ALL"
+    login_unix_socket: /run/mysqld/mysqld.sock
+  no_log: true
+
+- name: Check if schema already imported
+  community.mysql.mysql_query:
+    login_db: zabbix
+    query: "SHOW TABLES LIKE 'users'"
+    login_unix_socket: /run/mysqld/mysqld.sock
+  register: schema_check
+  changed_when: false
+
+- name: Import schema (first run only)
+  when: schema_check.rowcount[0] == 0
+  block:
+    - name: Allow trigger creation during import
+      community.mysql.mysql_variables:
+        variable: log_bin_trust_function_creators
+        value: 1
+        mode: global
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Import server.sql.gz
+      ansible.builtin.shell: >
+        zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz |
+        mysql --default-character-set=utf8mb4 zabbix
+
+    - name: Restore trigger setting
+      community.mysql.mysql_variables:
+        variable: log_bin_trust_function_creators
+        value: 0
+        mode: global
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: Set DB password in zabbix_server.conf
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    regexp: '^#?\s*DBPassword='
+    line: "DBPassword={{ zabbix_db_password }}"
+  no_log: true
+  notify: Restart zabbix server
+
+- name: Set PHP timezone for the frontend
+  ansible.builtin.replace:
+    path: /etc/zabbix/apache.conf
+    regexp: '^\s*#?\s*php_value date.timezone.*$'
+    replace: "        php_value date.timezone {{ zabbix_timezone }}"
+  notify: Restart apache
+
+- name: Enable and start services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - zabbix-server
+    - zabbix-agent2
+    - apache2
