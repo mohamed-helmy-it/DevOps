@@ -3,10 +3,10 @@ services:
     image: mariadb:10.11
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: admin123
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MARIADB_DATABASE: accounts
       MARIADB_USER: admin
-      MARIADB_PASSWORD: admin123
+      MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - dbdata:/var/lib/mysql
       - ./vprofile-project/src/main/resources/db_backup.sql:/docker-entrypoint-initdb.d/db_backup.sql:ro
@@ -19,8 +19,8 @@ services:
     image: rabbitmq:3-management
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: test
-      RABBITMQ_DEFAULT_PASS: test
+      RABBITMQ_DEFAULT_USER: ${RMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RMQ_PASSWORD}
 
   app01:
     build:

@@ -5,3 +5,6 @@ Nagios/nagios-4.*/
 Nagios/nagios-plugins-*/
 vprofile-docker/vprofile-project/
 vprofile-docker/vprofile-project/
+vprofile-docker/.env
+vprofile-docker/vprofile-project/
+vprofile-docker/vprofile-project/
