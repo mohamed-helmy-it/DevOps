@@ -3,3 +3,4 @@ zabbix/.vault_pass
 Nagios/*.tar.gz
 Nagios/nagios-4.*/
 Nagios/nagios-plugins-*/
+vprofile-docker/vprofile-project/
